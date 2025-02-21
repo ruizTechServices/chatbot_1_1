@@ -1,7 +1,16 @@
 "use client";
 import Link from "next/link";
+import { useState } from "react";
+import { preformat } from "../utils/functions/preformatting";
 
 export default function Home() {
+  const [userInput, setUserInput] = useState("");
+  const [preformattedString, setPreformattedString] = useState("");
+
+  const handlePreformat = () => {
+    setPreformattedString(preformat(userInput));
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-8">
       <h1 className="text-4xl font-bold mb-6 text-center">OpenAI API Playground</h1>
@@ -21,6 +30,21 @@ export default function Home() {
             </button>
           </Link>
         ))}
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold mb-4">Preformat Function Test</h2>
+        <input
+          type="text"
+          value={userInput}
+          onChange={(e) => setUserInput(e.target.value)}
+          placeholder="Enter text to preformat"
+          className="p-2 rounded-lg text-black"
+        />
+        <button onClick={handlePreformat} className="ml-2 p-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white">
+          Preformat
+        </button>
+        <p>Output: {preformattedString}</p>
       </div>
     </div>
   );
