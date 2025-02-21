@@ -5,6 +5,8 @@ import { preformat } from "@/utils/functions/preformatting";
 import { readAllRows } from "@/utils/supabase/functions/read_all_rows";
 import { insertRow } from "@/utils/supabase/functions/insert_a_row";
 import { generateUuid } from "@/utils/functions/generateUuid";
+import { BraveClient } from '@/utils/brave/client';
+import { webSearch } from '@/utils/brave/functions/web_search';
 
 export default function Home() {
   // States for Preformat Demo
@@ -19,6 +21,10 @@ export default function Home() {
 
   // State for displaying rows from the database
   const [rows, setRows] = useState<any[] | null>(null);
+
+  // State for web search
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<any>(null);
 
   // Preformat Function Test
   const handlePreformat = () => {
@@ -87,6 +93,33 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Error:", error);
+    }
+  };
+
+  // Function to handle web search
+  const handleSearch = async () => {
+    try {
+      const response = await fetch('/api/brave/braveProxy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      // if (!response.ok) {
+      //   throw new Error('Network response was not ok', Error(response.statusText));
+      // }
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Network response was not ok:', response.status, errorText, Error(response.statusText));
+        throw new Error('Network response was not ok');
+      }
+
+      const searchResults = await response.json();
+      setResults(searchResults);
+    } catch (error) {
+      console.error('Error during web search:', error);
     }
   };
 
@@ -251,6 +284,24 @@ export default function Home() {
             Insert Row
           </button>
         </div>
+      </div>
+
+      {/* Web Search */}
+      <div className="mt-8 text-black">
+        <h1 className="text-2xl font-bold mb-4 text-white">Web Search</h1>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Enter search query"
+        />
+        <button onClick={handleSearch}>Search</button>
+        {results && (
+          <div>
+            <h2>Results:</h2>
+            <pre>{JSON.stringify(results, null, 2)}</pre>
+          </div>
+        )}
       </div>
     </div>
   );
