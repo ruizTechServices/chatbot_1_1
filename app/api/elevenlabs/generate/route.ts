@@ -1,10 +1,7 @@
 import client from '@/utils/elevenlabs/client';
 import { NextResponse } from 'next/server';
-import player from 'play-sound';
 import fs from 'fs';
 import path from 'path';
-
-const play = player();
 
 export async function POST(request: Request) {
   try {
@@ -16,22 +13,24 @@ export async function POST(request: Request) {
       model_id: "eleven_multilingual_v2",
     });
 
-    const tempFilePath = path.join('/tmp', 'audio.mp3');
+    const tempFilePath = path.join('/tmp', `audio_${Date.now()}.mp3`);
     const writeStream = fs.createWriteStream(tempFilePath);
 
     audio.pipe(writeStream);
 
-    writeStream.on('finish', () => {
-      play.play(tempFilePath, (err: any) => {
-        if (err) {
-          console.error("Error playing audio:", err);
-          throw err;
-        }
-      });
+    await new Promise<void>((resolve, reject) => {
+      writeStream.on('finish', resolve);
+      writeStream.on('error', reject);
     });
 
-    return NextResponse.json({ message: "Audio generated and played successfully!" });
-  } catch (error) {
+    const audioBuffer = await fs.promises.readFile(tempFilePath);
+
+    fs.promises.unlink(tempFilePath).catch((err) => console.error('Error deleting temp file:', err));
+
+    return new Response(audioBuffer, {
+      headers: { 'Content-Type': 'audio/mpeg' }
+    });
+  } catch (error: any) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     } else {
