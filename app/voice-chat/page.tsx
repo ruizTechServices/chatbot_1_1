@@ -1,71 +1,69 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { ReactMic } from 'react-mic';
+import dynamic from 'next/dynamic';
+
+// Dynamically import VoiceRecorder to avoid SSR issues
+const VoiceRecorder = dynamic(() => import('../../components/voice_recorder'), { ssr: false });
 
 export default function VoiceChat() {
-  const [recording, setRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [responseText, setResponseText] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Start recording
-  const startRecording = () => {
-    setRecording(true);
-  };
+  // Handle recording stop and process the recorded audio
+  const onStopRecording = async (blob: Blob) => {
+    try {
+      // Build FormData
+      const formData = new FormData();
+      formData.append('audioFile', blob, 'recording.wav');
 
-  // This fires automatically when recording goes from true -> false
-  const onStopRecording = async ({ blob }: { blob: Blob }) => {
-    setRecording(false);
+      // Transcribe speech to text
+      const transcribeResponse = await fetch('/api/openai/transcriptions', {
+        method: 'POST',
+        body: formData,
+      });
 
-    // 1) Build FormData
-    const formData = new FormData();
-    formData.append('audioFile', blob, 'recording.wav');
+      if (!transcribeResponse.ok) throw new Error('Transcription failed');
+      const transcribedData = await transcribeResponse.json();
+      const transcribedText = transcribedData.text || 'Failed to transcribe';
+      setTranscript(transcribedText);
 
-    // 2) Call /api/openai/transcriptions
-    const transcribeResponse = await fetch('/api/openai/transcriptions', {
-      method: 'POST',
-      body: formData, // <-- send FormData
-    });
+      // Chat with GPT-4o using transcribed text
+      const chatResponse = await fetch('/api/openai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [{ role: 'user', content: transcribedText }],
+        }),
+      });
 
-    const transcribedData = await transcribeResponse.json();
-    const transcribedText = transcribedData.text || 'Failed to transcribe';
-    setTranscript(transcribedText);
+      if (!chatResponse.ok) throw new Error('Chat request failed');
+      const chatData = await chatResponse.json();
+      const botResponse = chatData.choices?.[0]?.message?.content || 'No response';
+      setResponseText(botResponse);
 
-    // 3) Chat with GPT-4o
-    const chatResponse = await fetch('/api/openai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [{ role: 'user', content: transcribedText }],
-      }),
-    });
+      // Convert chat response to speech (TTS)
+      const ttsResponse = await fetch('/api/openai/speech', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: botResponse, model: 'tts-1', voice: 'alloy' }),
+      });
 
-    const chatData = await chatResponse.json();
-    const botResponse = chatData.choices?.[0]?.message?.content || 'No response';
-    setResponseText(botResponse);
-
-    // 4) Convert chat response to speech (TTS)
-    const ttsResponse = await fetch('/api/elevenlabs/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: botResponse }),
-    });
-
-    if (!ttsResponse.ok) {
-      console.error('Failed to generate speech', await ttsResponse.text());
-    } else {
-      const audioBlob = await ttsResponse.blob();
-      const speechUrl = URL.createObjectURL(audioBlob);
+      if (!ttsResponse.ok) throw new Error('TTS generation failed');
+      const ttsData = await ttsResponse.json();
+      const speechUrl = ttsData.url;
       setAudioUrl(speechUrl);
 
-      // 5) Play the generated speech
+      // Play generated speech
       if (audioRef.current) {
         audioRef.current.src = speechUrl;
         audioRef.current.play();
       }
+    } catch (error) {
+      console.error('Error processing audio:', error);
     }
   };
 
@@ -73,21 +71,10 @@ export default function VoiceChat() {
     <div className="text-black flex flex-col items-center justify-center min-h-screen p-6">
       <h1 className="text-2xl font-bold text-white">Voice-Only Chatbot</h1>
 
-      <ReactMic
-        record={recording}
-        className="hidden"
-        onStop={onStopRecording}   // <-- onStop triggers the function above
-        mimeType="audio/wav"
-      />
+      {/* Voice Recorder Component */}
+      <VoiceRecorder onStop={onStopRecording} />
 
-      <button
-        onMouseDown={startRecording}
-        onMouseUp={() => setRecording(false)}
-        className={`px-6 py-3 mt-6 rounded-lg text-white ${recording ? 'bg-red-500' : 'bg-blue-500'}`}
-      >
-        {recording ? 'Recording... Release to Stop' : 'Hold to Speak'}
-      </button>
-
+      {/* Transcription Display */}
       {transcript && (
         <div className="mt-4">
           <h2 className="text-lg font-semibold">You said:</h2>
@@ -95,6 +82,7 @@ export default function VoiceChat() {
         </div>
       )}
 
+      {/* Chatbot Response Display */}
       {responseText && (
         <div className="mt-4">
           <h2 className="text-lg font-semibold">Bot Response:</h2>
@@ -102,6 +90,7 @@ export default function VoiceChat() {
         </div>
       )}
 
+      {/* Generated Speech Audio */}
       {audioUrl && <audio ref={audioRef} controls className="mt-4" />}
     </div>
   );
