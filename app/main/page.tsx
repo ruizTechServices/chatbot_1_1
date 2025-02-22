@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import React, { useState } from 'react';
 
 export default function Chatbot() {
@@ -23,6 +24,7 @@ export default function Chatbot() {
 
   return (
     <div className="flex flex-col h-screen p-6 bg-gray-100 text-black">
+      <Link href="/">Home Page</Link>
       <div className="flex-grow overflow-y-auto mb-4">
         {messages.map((message, index) => (
           <div

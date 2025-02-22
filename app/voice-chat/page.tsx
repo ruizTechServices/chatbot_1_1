@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 
 // Dynamically import VoiceRecorder to avoid SSR issues
 const VoiceRecorder = dynamic(() => import('../../components/voice_recorder'), { ssr: false });
@@ -69,6 +70,7 @@ export default function VoiceChat() {
 
   return (
     <div className="text-black flex flex-col items-center justify-center min-h-screen p-6">
+      <Link href="/">Home Page</Link>
       <h1 className="text-2xl font-bold text-white">Voice-Only Chatbot</h1>
 
       {/* Voice Recorder Component */}
