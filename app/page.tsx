@@ -5,8 +5,6 @@ import { preformat } from "@/utils/functions/preformatting";
 import { readAllRows } from "@/utils/supabase/functions/read_all_rows";
 import { insertRow } from "@/utils/supabase/functions/insert_a_row";
 import { generateUuid } from "@/utils/functions/generateUuid";
-import { BraveClient } from '@/utils/brave/client';
-import { webSearch } from '@/utils/brave/functions/web_search';
 
 export default function Home() {
   // States for Preformat Demo
@@ -96,33 +94,6 @@ export default function Home() {
     }
   };
 
-  // Function to handle web search
-  const handleSearch = async () => {
-    try {
-      const response = await fetch('/api/brave/braveProxy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query }),
-      });
-
-      // if (!response.ok) {
-      //   throw new Error('Network response was not ok', Error(response.statusText));
-      // }
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Network response was not ok:', response.status, errorText, Error(response.statusText));
-        throw new Error('Network response was not ok');
-      }
-
-      const searchResults = await response.json();
-      setResults(searchResults);
-    } catch (error) {
-      console.error('Error during web search:', error);
-    }
-  };
-
   // Set initial conversationId using generateUuid
   useEffect(() => {
     setConversationId(generateUuid());
@@ -176,7 +147,9 @@ export default function Home() {
 
       {/* Preformat Function Test */}
       <div className="mt-8 w-full max-w-md mx-auto">
-        <h2 className="text-2xl font-bold mb-4 text-center">Preformat Function Test</h2>
+        <h2 className="text-2xl font-bold mb-4 text-center">
+          Preformat Function Test
+        </h2>
         <div className="flex flex-col sm:flex-row items-center gap-2">
           <input
             type="text"
@@ -242,66 +215,6 @@ export default function Home() {
             <p className="text-gray-400">No data available.</p>
           )}
         </div>
-
-        {/* Insert New Row Form */}
-        <h2 className="text-2xl font-bold mt-8 mb-4">Insert New Row</h2>
-        <div className="flex flex-col gap-4 max-w-2xl w-full">
-          <input
-            type="text"
-            value={conversationId}
-            onChange={(e) => setConversationId(e.target.value)}
-            placeholder="Conversation ID (UUID)"
-            className="p-2 rounded-lg text-black"
-            readOnly
-          />
-          <input
-            type="number"
-            value={positionId}
-            onChange={(e) => setPositionId(e.target.value)}
-            placeholder="Position ID"
-            className="p-2 rounded-lg text-black"
-          />
-          <input
-            type="text"
-            value={textInput}
-            onChange={(e) => setTextInput(e.target.value)}
-            placeholder="Text"
-            className="p-2 rounded-lg text-black"
-          />
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={isUser}
-              onChange={(e) => setIsUser(e.target.checked)}
-              className="form-checkbox"
-            />
-            Is User
-          </label>
-          <button
-            onClick={handleInsertRow}
-            className="bg-indigo-600 hover:bg-indigo-700 w-full py-4 rounded-lg transition-colors duration-300 text-lg font-semibold shadow-lg"
-          >
-            Insert Row
-          </button>
-        </div>
-      </div>
-
-      {/* Web Search */}
-      <div className="mt-8 text-black">
-        <h1 className="text-2xl font-bold mb-4 text-white">Web Search</h1>
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Enter search query"
-        />
-        <button onClick={handleSearch}>Search</button>
-        {results && (
-          <div>
-            <h2>Results:</h2>
-            <pre>{JSON.stringify(results, null, 2)}</pre>
-          </div>
-        )}
       </div>
     </div>
   );
