@@ -1,4 +1,3 @@
-
 "use client";
 import { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -7,6 +6,7 @@ import { generateEmbeddings } from "@/utils/functions/generateEmbeddings";
 import Link from "next/link";
 import { readAllRows } from "@/utils/supabase/functions/read_all_rows";
 import { preformat } from "@/utils/functions/preformatting";
+import { convertMessagesToJSONL } from '@/utils/functions/messageToJsonl';
 
 export default function Functions() {
   const [preformatInput, setPreformatInput] = useState("");
@@ -17,6 +17,7 @@ export default function Functions() {
   const [length, setLength] = useState(100); // Default length
   const [generatedParagraph, setGeneratedParagraph] = useState("");
   const [generatedEmbeddings, setGeneratedEmbeddings] = useState("");
+  const [messages, setMessages] = useState([]); // State for messages
 
   // State for displaying rows from the database
   const [rows, setRows] = useState<any[] | null>(null);
@@ -39,7 +40,9 @@ export default function Functions() {
     setPreformattedString(preformat(preformatInput));
   };
 
-  const handleGenerateUUID = (event: React.MouseEvent<HTMLButtonElement>): void => {
+  const handleGenerateUUID = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ): void => {
     setUuid(uuidv4());
   };
 
@@ -52,6 +55,27 @@ export default function Functions() {
     const embeddings = await generateEmbeddings(embeddingContext);
     setGeneratedEmbeddings(JSON.stringify(embeddings, null, 2));
   };
+
+  function handleSaveChat(event: React.MouseEvent<HTMLButtonElement>): void {
+    const jsonlData = convertMessagesToJSONL(messages);
+
+    console.log("Converted JSONL Data:", jsonlData);
+
+    fetch('/api/save-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: jsonlData }),
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to save chat history');
+        }
+        console.log('Chat history saved successfully');
+      })
+      .catch(error => {
+        console.error('Error saving chat history:', error);
+      });
+  }
 
   return (
     <div>
@@ -204,6 +228,19 @@ export default function Functions() {
           ) : (
             <p className="text-gray-400 mb-5">No data available.</p>
           )}
+        </div>
+      </div>
+
+      {/* Save Chat Function Test */}
+      <div className="mt-8 w-full max-w-md mx-auto border-b-2 border-gray-300">
+        <h2 className="text-2xl font-bold mb-4 text-center">Save Chat</h2>
+        <div className="flex flex-col sm:flex-row items-center gap-2">
+          <button
+            onClick={handleSaveChat}
+            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full"
+          >
+            Save Chat
+          </button>
         </div>
       </div>
     </div>
