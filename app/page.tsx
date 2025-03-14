@@ -37,6 +37,11 @@ export default function Home() {
             label: "Functions",
             color: "bg-red-600 hover:bg-red-700",
           },
+          {
+            href: "/google",
+            label: "Google",
+            color: "bg-red-600 hover:bg-red-700",
+          }
         ].map((item, index) => (
           <Link key={index} href={item.href} className="w-full">
             <button

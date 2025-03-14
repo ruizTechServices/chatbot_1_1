@@ -6,12 +6,20 @@ export default function Chatbot() {
   const [messages, setMessages] = useState<{ text: string; sender: 'user' | 'bot' }[]>([]);
   const [input, setInput] = useState('');
 
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      handleSendMessage();
+    }
+  };
+
   const handleSendMessage = () => {
     if (!input.trim()) return;
 
     const newMessages = [...messages, { text: input, sender: 'user' as 'user' }];
     setMessages(newMessages);
     setInput('');
+
+    
 
     // Mock bot response
     setTimeout(() => {
@@ -21,6 +29,7 @@ export default function Chatbot() {
       ]);
     }, 1000);
   };
+
 
   return (
     <div className="flex flex-col h-screen p-6 bg-gray-100 text-black">
@@ -44,6 +53,7 @@ export default function Chatbot() {
           onChange={(e) => setInput(e.target.value)}
           className="flex-grow p-2 border border-gray-300 rounded-l-lg"
           placeholder="Type a message..."
+          onKeyDown={handleKeyPress}
         />
         <button
           onClick={handleSendMessage}
