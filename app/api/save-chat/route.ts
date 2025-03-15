@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     // Use the provided fileName or default to "history.jsonl"
     const safeFileName = fileName ? sanitizeFileName(fileName) : "history.jsonl";
-    const filePath = path.join(process.cwd(), safeFileName);
+    const filePath = path.join("/tmp", safeFileName);
 
     // Append the conversation turn as a JSON object (followed by a newline)
     fs.appendFileSync(filePath, data + "\n", "utf8");

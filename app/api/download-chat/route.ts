@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const fileNameParam = searchParams.get("fileName") || "history.jsonl";
     const safeFileName = sanitizeFileName(fileNameParam);
-    const filePath = path.join(process.cwd(), safeFileName);
+    const filePath = path.join("/tmp", safeFileName);
 
     // Check if the file exists
     if (!fs.existsSync(filePath)) {
