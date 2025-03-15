@@ -50,7 +50,7 @@ export default function Chatbot() {
     // Update in-memory chat state with the user's message.
     const newMessages = [
       ...messages,
-      { text: sanitizedInput, sender: "user" as "user" }
+      { text: sanitizedInput, sender: "user" as "user" },
     ];
     setMessages(newMessages);
     setInput("");
@@ -82,7 +82,10 @@ export default function Chatbot() {
           : "No response.";
 
       // Append the bot's response to in-memory state.
-      setMessages((prev) => [...prev, { text: botText, sender: "bot" as "bot" }]);
+      setMessages((prev) => [
+        ...prev,
+        { text: botText, sender: "bot" as "bot" },
+      ]);
 
       // Create a JSONL turn representing this conversation turn.
       const chatTurn = JSON.stringify({
@@ -120,7 +123,7 @@ export default function Chatbot() {
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`p-2 mb-2 rounded-lg max-w-xs ${
+            className={`p-2 mb-2 rounded-lg max-w-sm ${
               message.sender === "user"
                 ? "ml-auto bg-blue-500 text-white"
                 : "mr-auto bg-gray-300"
