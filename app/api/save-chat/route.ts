@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
+export const runtime = "nodejs";
+
 // Sanitize file name to remove any characters that may cause issues.
 function sanitizeFileName(fileName: string): string {
   return fileName.replace(/[^a-z0-9\-_.]/gi, '-');
